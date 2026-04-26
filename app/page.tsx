@@ -32,22 +32,59 @@ const features = [
   },
 ]
 
+function getProgressLabel(progress: number, secondsElapsed: number) {
+  if (secondsElapsed > 90) {
+    return 'Le rendu prend plus de temps que prevu. Si ca finit en erreur, verifie Minimax et Vercel Blob.'
+  }
+
+  if (progress >= 90) {
+    return 'Le fournisseur video finalise le rendu. Cette etape peut etre plus longue.'
+  }
+
+  if (progress >= 60) {
+    return 'Generation en cours chez le fournisseur video.'
+  }
+
+  if (progress >= 20) {
+    return "Preparation de la demande et envoi au moteur d'IA."
+  }
+
+  return 'Demarrage de la generation.'
+}
+
 export default function Page() {
   const [prompt, setPrompt] = useState(suggestions[0])
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
+  const [secondsElapsed, setSecondsElapsed] = useState(0)
   const [error, setError] = useState('')
   const [result, setResult] = useState<GenerationResult | null>(null)
 
   useEffect(() => {
     if (!loading) {
       setProgress(0)
+      setSecondsElapsed(0)
       return
     }
 
     const interval = window.setInterval(() => {
-      setProgress((value) => (value >= 92 ? value : value + 4))
-    }, 500)
+      setSecondsElapsed((value) => value + 1)
+      setProgress((value) => {
+        if (value >= 97) {
+          return value
+        }
+
+        if (value >= 92) {
+          return value + 1
+        }
+
+        if (value >= 72) {
+          return value + 2
+        }
+
+        return value + 4
+      })
+    }, 1000)
 
     return () => window.clearInterval(interval)
   }, [loading])
@@ -65,16 +102,21 @@ export default function Page() {
     setResult(null)
 
     try {
+      const controller = new AbortController()
+      const timeoutId = window.setTimeout(() => controller.abort(), 180000)
+
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt }),
+        signal: controller.signal,
       })
+      window.clearTimeout(timeoutId)
 
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error || 'La generation a echoue.')
+        setError(data.details || data.reason || data.message || data.error || 'La generation a echoue.')
         return
       }
 
@@ -87,7 +129,12 @@ export default function Page() {
         url: data.url,
         taskId: data.taskId,
       })
-    } catch {
+    } catch (requestError) {
+      if (requestError instanceof Error && requestError.name === 'AbortError') {
+        setError('La requete a depasse 3 minutes. Verifie la cle Minimax et la configuration Vercel Blob.')
+        return
+      }
+
       setError("Le site n'arrive pas a joindre le serveur local.")
     } finally {
       window.setTimeout(() => setLoading(false), 350)
@@ -160,6 +207,7 @@ export default function Page() {
             <div className="progress-track" aria-hidden="true">
               <div className="progress-bar" style={{ width: `${progress}%` }} />
             </div>
+            {loading ? <p className="progress-label">{getProgressLabel(progress, secondsElapsed)}</p> : null}
           </div>
 
           {error ? <p className="message error">{error}</p> : null}
