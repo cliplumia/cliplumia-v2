@@ -21,6 +21,13 @@ export async function POST(req: Request) {
       })
     }
 
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      return NextResponse.json({
+        error: 'Vercel Blob non configure',
+        details: 'Connecte un store Vercel Blob au projet pour publier les videos generees.',
+      }, { status: 500 })
+    }
+
     const startRes = await fetch('https://api.minimax.io/v1/video_generation', {
       method: 'POST',
       headers: {
@@ -35,6 +42,13 @@ export async function POST(req: Request) {
     })
 
     const startData = await startRes.json()
+
+    if (!startRes.ok) {
+      return NextResponse.json({
+        error: 'Minimax a refuse la demande',
+        details: startData.base_resp?.status_msg || startData.message || `HTTP ${startRes.status}`,
+      }, { status: 502 })
+    }
 
     if (!startData.task_id) {
       return NextResponse.json({
@@ -56,6 +70,13 @@ export async function POST(req: Request) {
       )
 
       const checkData = await checkRes.json()
+
+      if (!checkRes.ok) {
+        return NextResponse.json({
+          error: 'Impossible de suivre la generation',
+          details: checkData.base_resp?.status_msg || checkData.message || `HTTP ${checkRes.status}`,
+        }, { status: 502 })
+      }
 
       if (checkData.status === 'Success' && checkData.file_id) {
         const fileRes = await fetch(
