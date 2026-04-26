@@ -1,25 +1,34 @@
-# Welcome to Next.js
+# ClipLumia
 
-This is the most minimal starter for your Next.js project.
+Prototype de site IA en Next.js pour generer des videos a partir d'un prompt.
 
-## Deploy your own
+## Ce que fait le projet
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/next.js/tree/canary/examples/hello-world&project-name=hello-world&repository-name=hello-world)
+- interface simple pour demander une video
+- barre de progression et messages d'erreur plus clairs
+- mode demo si la cle API n'est pas encore configuree
+- route API prete pour une integration Minimax
 
-## How to use
-
-Execute [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app) with [npm](https://docs.npmjs.com/cli/init), [Yarn](https://yarnpkg.com/lang/en/docs/cli/create/), or [pnpm](https://pnpm.io) to bootstrap the example:
-
-```bash
-npx create-next-app --example hello-world hello-world-app
-```
+## Lancer le projet
 
 ```bash
-yarn create next-app --example hello-world hello-world-app
+npm install
+npm run dev
 ```
+
+## Variables d'environnement
+
+Pour la vraie generation video, ajoute cette variable :
 
 ```bash
-pnpm create next-app --example hello-world hello-world-app
+MINIMAX_API_KEY=ta_cle
 ```
 
-Deploy it to the cloud with [Vercel](https://vercel.com/new?utm_source=github&utm_medium=readme&utm_campaign=next-example) ([Documentation](https://nextjs.org/docs/deployment)).
+## Deploiement Vercel
+
+Le projet est adapte a Vercel.
+
+Pense aussi a configurer :
+
+- `MINIMAX_API_KEY`
+- Vercel Blob pour stocker les videos generees
