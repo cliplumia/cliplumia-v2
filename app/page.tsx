@@ -108,7 +108,7 @@ export default function Page() {
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt: prompt }),
         signal: controller.signal,
       })
       window.clearTimeout(timeoutId)
